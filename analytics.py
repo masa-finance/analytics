@@ -26,14 +26,18 @@ def get_mint_events(base_url, contract_address, api_key, topic0):
 
         # Check if the response is not empty and status code is 200
         if response.status_code == 200 and response.text.strip():
-            logs = response.json().get('result', [])
-            num_logs = len(logs)
+            logs = response.json().get('result')
+            if isinstance(logs, list):
+                num_logs = len(logs)
 
-            if num_logs == 0:
-                # If no more logs, stop requesting
+                if num_logs == 0:
+                    # If no more logs, stop requesting
+                    break
+
+                total_logs += num_logs
+            else:
+                print(f"Error: 'result' not found or not a list in response from {base_url}")
                 break
-
-            total_logs += num_logs
         else:
             # Add error handling here. For example, print an error message and break the loop
             print(f"Error: Received invalid response from {base_url}")
