@@ -6,24 +6,42 @@ import os
 load_dotenv()
 
 def get_mint_events(base_url, contract_address, api_key, topic0):
-    # Get logs of Mint function calls
-    response = requests.get(base_url, params={
-        "module": "logs",
-        "action": "getLogs",
-        "fromBlock": "0",
-        "toBlock": "latest",
-        "address": contract_address,
-        "topic0": topic0,
-        "page": "1",
-        "offset": "1000",
-        "apikey": api_key
-    })
-    
-    print(response.text) # Print the full response from the Etherscan API
+    page = 1
+    offset = 1000
+    total_logs = 0
 
-    logs = response.json().get('result', [])
+    while True:
+        # Get logs of Mint function calls
+        response = requests.get(base_url, params={
+            "module": "logs",
+            "action": "getLogs",
+            "fromBlock": "0",
+            "toBlock": "latest",
+            "address": contract_address,
+            "topic0": topic0,
+            "page": str(page),
+            "offset": str(offset),
+            "apikey": api_key
+        })
 
-    return len(logs)
+        # Check if the response is not empty and status code is 200
+        if response.status_code == 200 and response.text.strip():
+            logs = response.json().get('result', [])
+            num_logs = len(logs)
+
+            if num_logs == 0:
+                # If no more logs, stop requesting
+                break
+
+            total_logs += num_logs
+        else:
+            # Add error handling here. For example, print an error message and break the loop
+            print(f"Error: Received invalid response from {base_url}")
+            break
+
+        page += 1
+
+    return total_logs
 
 # Define network data
 networks = {
