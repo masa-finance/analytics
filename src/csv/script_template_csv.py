@@ -1,11 +1,17 @@
 import requests
 import json
+import datetime
 from dotenv import load_dotenv
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor
+import csv
 
 load_dotenv()
+
+def add_address_to_csv(address):
+    with open('addresses.csv', mode='a') as file:
+        writer = csv.writer(file)
+        writer.writerow([address])
 
 def get_mint_events(network):
     base_url = network['url']
@@ -14,9 +20,9 @@ def get_mint_events(network):
     topic0 = "0x7650948236619e679e44bf502d527ec950d1d58336e6babf229f483c57d04672"
 
     block_step = 5000
-    from_block = network['start_block']  # Get the start block from the network dictionary
+    from_block = network['start_block']  
     to_block = from_block + block_step
-    max_block = 45000000  # Set this to the maximum block number you want to search up to
+    max_block = 45000000  
     total_logs = 0
 
     while from_block <= max_block:
@@ -39,8 +45,10 @@ def get_mint_events(network):
             logs = response_json.get('result')
             if isinstance(logs, list):
                 num_logs = len(logs)
-
                 total_logs += num_logs
+                for log in logs:
+                    to_address = '0x' + log['data'][90:130]
+                    add_address_to_csv(to_address)
             else:
                 print(f"Error: 'result' not found or not a list in response from {base_url}. Full response: {response_json}")
         else:
@@ -48,42 +56,7 @@ def get_mint_events(network):
 
         from_block = to_block + 1
         to_block = min(to_block + block_step, max_block)
-        time.sleep(14)
+        time.sleep(10)
 
     print(f"Number of mint events for {network}: {total_logs}")
     return total_logs
-
-# Rest of your code...
-
-networks = {
-    "etherscan": {
-        "url": "https://api.etherscan.io/api",
-        "contract_address_env": "ETHERSCAN_CONTRACT_ADDRESS",
-        "api_key_env": "ETHERSCAN_API_KEY",
-        "start_block": 16633100  # Add a start block for each network
-    },
-    "bscscan": {
-        "url": "https://api.bscscan.com/api",
-        "contract_address_env": "BSCSCAN_CONTRACT_ADDRESS",
-        "api_key_env": "BSCSCAN_API_KEY",
-        "start_block": 25684468
-    },
-    "polygonscan": {
-        "url": "https://api.polygonscan.com/api",
-        "contract_address_env": "POLYGONSCAN_CONTRACT_ADDRESS",
-        "api_key_env": "POLYGONSCAN_API_KEY",
-        "start_block": 39314880
-    },
-    "celoscan": {
-        "url": "https://api.celoscan.io/api",
-        "contract_address_env": "CELOSCAN_CONTRACT_ADDRESS",
-        "api_key_env": "CELOSCAN_API_KEY",
-        "start_block": 17756683
-    }
-}
-
-with ThreadPoolExecutor() as executor:
-    mint_event_futures = {executor.submit(get_mint_events, network): network for network in networks.values()}
-    total_mint_events = sum(future.result() for future in mint_event_futures)
-
-print(f"Total number of mint events: {total_mint_events}")
