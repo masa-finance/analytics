@@ -14,7 +14,7 @@ def get_mint_events(network):
     topic0 = "0x7650948236619e679e44bf502d527ec950d1d58336e6babf229f483c57d04672"
 
     block_step = 5000
-    from_block = 16633100
+    from_block = network['start_block']  # Get the start block from the network dictionary
     to_block = from_block + block_step
     max_block = 45000000  # Set this to the maximum block number you want to search up to
     total_logs = 0
@@ -55,27 +55,30 @@ def get_mint_events(network):
 
 # Rest of your code...
 
-
 networks = {
     "etherscan": {
         "url": "https://api.etherscan.io/api",
         "contract_address_env": "ETHERSCAN_CONTRACT_ADDRESS",
         "api_key_env": "ETHERSCAN_API_KEY",
+        "start_block": 16633100  # Add a start block for each network
     },
     "bscscan": {
         "url": "https://api.bscscan.com/api",
         "contract_address_env": "BSCSCAN_CONTRACT_ADDRESS",
         "api_key_env": "BSCSCAN_API_KEY",
+        "start_block": 16633100
     },
     "polygonscan": {
         "url": "https://api.polygonscan.com/api",
         "contract_address_env": "POLYGONSCAN_CONTRACT_ADDRESS",
         "api_key_env": "POLYGONSCAN_API_KEY",
+        "start_block": 16633100
     },
     "celoscan": {
         "url": "https://api.celoscan.io/api",
         "contract_address_env": "CELOSCAN_CONTRACT_ADDRESS",
         "api_key_env": "CELOSCAN_API_KEY",
+        "start_block": 16633100
     }
 }
 
