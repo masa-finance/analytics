@@ -7,4 +7,4 @@ network = {
     "start_block": 39314880
 }
 
-get_mint_events(network)
+get_mint_events(network, "polygon")
