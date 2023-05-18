@@ -1,10 +1,28 @@
-from script_template import get_mint_events
+from mg import get_mint_events
+import requests
+import os
 
 network = {
     "url": "https://api.celoscan.io/api",
     "contract_address_env": "CELOSCAN_CONTRACT_ADDRESS",
     "api_key_env": "CELOSCAN_API_KEY",
-    "start_block": 17756683
 }
+
+def fetch_latest_block_number(api_key):
+    response = requests.get(
+        "https://api.celoscan.io/api",
+        params={
+            "module": "proxy",
+            "action": "eth_blockNumber",
+            "apikey": api_key
+        }
+    )
+    latest_block = int(response.json()["result"], 16)
+    return max(0, latest_block - 100000)
+
+api_key = os.getenv(network['api_key_env'])
+start_block = fetch_latest_block_number(api_key)
+
+network["start_block"] = start_block
 
 get_mint_events(network, "celo")
