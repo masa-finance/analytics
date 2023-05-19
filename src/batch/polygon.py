@@ -1,4 +1,4 @@
-from script_template import get_mint_events
+from batch import get_mint_events
 
 network = {
     "url": "https://api.polygonscan.com/api",
