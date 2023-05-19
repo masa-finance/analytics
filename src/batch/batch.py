@@ -62,36 +62,45 @@ def get_mint_events(network, network_name):
     total_logs = 0
 
     while from_block <= max_block:
-        response = requests.get(base_url, params={
-            "module": "logs",
-            "action": "getLogs",
-            "fromBlock": str(from_block),
-            "toBlock": str(to_block),
-            "address": contract_address,
-            "topic0": topic0,
-            "offset": "1000",
-            "apikey": api_key
-        })
+        page = 1
+        while True:  # Loop to handle pagination
+            response = requests.get(base_url, params={
+                "module": "logs",
+                "action": "getLogs",
+                "fromBlock": str(from_block),
+                "toBlock": str(to_block),
+                "address": contract_address,
+                "topic0": topic0,
+                "offset": "1000",
+                "page": str(page),
+                "apikey": api_key
+            })
 
-        print(f"Requested from block {from_block} to block {to_block}. Response status: {response.status_code}")
+            print(f"Requested from block {from_block} to block {to_block}, page {page}. Response status: {response.status_code}")
 
-        if response.status_code == 200 and response.text.strip():
-            response_json = response.json()
-            print(f"Response: {response_json}")
-            logs = response_json.get('result')
-            if isinstance(logs, list):
-                num_logs = len(logs)
-                total_logs += num_logs
-                for log in logs:
-                    to_address = '0x' + log['data'][90:130]
-                    timestamp = int(log['timeStamp'], 16)  
+            if response.status_code == 200 and response.text.strip():
+                response_json = response.json()
+                print(f"Response: {response_json}")
+                logs = response_json.get('result')
+                if isinstance(logs, list):
+                    num_logs = len(logs)
+                    total_logs += num_logs
+                    if num_logs == 0:  # No more logs, break the pagination loop
+                        break
+                    for log in logs:
+                        to_address = '0x' + log['data'][90:130]
+                        timestamp = int(log['timeStamp'], 16)  
 
-                    check_and_create_user(to_address, "https://zksbt-cookie-api.onrender.com")
-                    add_event_to_user(to_address, "https://zksbt-cookie-api.onrender.com", timestamp, network_name)
+                        check_and_create_user(to_address, "https://zksbt-cookie-api.onrender.com")
+                        add_event_to_user(to_address, "https://zksbt-cookie-api.onrender.com", timestamp, network_name)
+                else:
+                    print(f"Error: 'result' not found or not a list in response from {base_url}. Full response: {response_json}")
+                    break  # Break the pagination loop in case of error
             else:
-                print(f"Error: 'result' not found or not a list in response from {base_url}. Full response: {response_json}")
-        else:
-            print(f"Error: Received invalid response from {base_url}")
+                print(f"Error: Received invalid response from {base_url}")
+                break  # Break the pagination loop in case of error
+
+            page += 1  # Increase page number for the next iteration
 
         from_block = to_block + 1
         to_block = min(to_block + block_step, max_block)
@@ -99,3 +108,4 @@ def get_mint_events(network, network_name):
 
     print(f"Number of mint events for {network_name}: {total_logs}")
     return total_logs
+
